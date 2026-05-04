@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Nutri-Budget — Reste à Vivre · Bordeaux</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+    .app {
+      max-width: 430px;
+      margin: 0 auto;
+      background: white;
+      min-height: 100vh;
+      padding: 0 0 2rem;
+    }
+    .header {
+      background: #1F5C99;
+      color: white;
+      padding: 1.25rem 1.25rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-title { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+    .header-sub { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+    .screen { display: none; padding: 1.25rem; }
+    .screen.active { display: block; }
+
+    /* ACCUEIL */
+    .hero { text-align: center; padding: 2rem 0 1.5rem; }
+    .hero-emoji { font-size: 56px; margin-bottom: 0.75rem; }
+    .hero-title { font-size: 22px; font-weight: 600; color: #1F5C99; margin-bottom: 0.5rem; }
+    .hero-desc { font-size: 15px; color: #555; line-height: 1.6; }
+    .badge-anon {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #e8f5e9; color: #2e7d32; border-radius: 20px;
+      padding: 5px 14px; font-size: 13px; font-weight: 500;
+      margin: 1rem auto; display: table;
+    }
+    .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 1.25rem 0; }
+    .stat-box {
+      background: #f0f4f8; border-radius: 10px; padding: 14px 10px;
+      text-align: center;
+    }
+    .stat-num { font-size: 22px; font-weight: 700; color: #1F5C99; }
+    .stat-lbl { font-size: 11px; color: #666; margin-top: 3px; line-height: 1.4; }
+
+    /* FORMULAIRE */
+    .section-title { font-size: 19px; font-weight: 600; margin-bottom: 0.3rem; color: #1a1a1a; }
+    .section-sub { font-size: 14px; color: #666; margin-bottom: 1.25rem; line-height: 1.5; }
+    .card { background: #f8f9fb; border: 1px solid #e5e9ef; border-radius: 12px; padding: 1.1rem; margin-bottom: 1rem; }
+    .card-label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 0.9rem; }
+    .field { margin-bottom: 0.85rem; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display: block; font-size: 13px; color: #555; margin-bottom: 5px; font-weight: 500; }
+    .field input {
+      width: 100%; padding: 10px 13px;
+      border: 1.5px solid #dde2e8; border-radius: 8px;
+      font-size: 16px; background: white; color: #1a1a1a;
+      transition: border-color 0.15s;
+    }
+    .field input:focus { outline: none; border-color: #1F5C99; box-shadow: 0 0 0 3px rgba(31,92,153,0.1); }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .steps { display: flex; justify-content: center; gap: 8px; margin-bottom: 1.5rem; }
+    .step-dot { width: 9px; height: 9px; border-radius: 50%; background: #d0d5dd; }
+    .step-dot.active { background: #1F5C99; }
+    .step-dot.done { background: #1D9E75; }
+
+    /* BOUTONS */
+    .btn-primary {
+      width: 100%; padding: 14px;
+      background: #1F5C99; color: white;
+      border: none; border-radius: 10px;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      margin-top: 0.5rem; transition: background 0.15s, transform 0.1s;
+    }
+    .btn-primary:hover { background: #185082; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-danger { background: #d32f2f; }
+    .btn-danger:hover { background: #b71c1c; }
+    .btn-secondary {
+      width: 100%; padding: 12px;
+      background: transparent; color: #1F5C99;
+      border: 1.5px solid #1F5C99; border-radius: 10px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+      margin-top: 0.6rem; transition: background 0.15s;
+    }
+    .btn-secondary:hover { background: #e8f0f9; }
+    .btn-back {
+      display: inline-flex; align-items: center; gap: 5px;
+      color: #555; font-size: 14px; cursor: pointer;
+      margin-bottom: 1.1rem; background: none; border: none; padding: 0;
+    }
+
+    /* RÉSULTAT */
+    .result-big {
+      font-size: 64px; font-weight: 700; text-align: center;
+      padding: 1rem 0 0.2rem; line-height: 1;
+    }
+    .result-unit { text-align: center; font-size: 16px; color: #666; margin-bottom: 0.5rem; }
+    .danger { color: #d32f2f; }
+    .warning { color: #e65100; }
+    .success { color: #1D9E75; }
+    .gauge-wrap { height: 10px; background: #eee; border-radius: 5px; margin: 1rem 0; overflow: hidden; }
+    .gauge-bar { height: 100%; border-radius: 5px; transition: width 0.7s ease; }
+    .bk-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 0.75rem 0 1rem; }
+    .bk-box { background: #f0f4f8; border-radius: 8px; padding: 10px 6px; text-align: center; }
+    .bk-val { font-size: 17px; font-weight: 600; }
+    .bk-lbl { font-size: 11px; color: #777; margin-top: 2px; }
+    .alert {
+      border-radius: 10px; padding: 12px 14px;
+      font-size: 14px; line-height: 1.6; margin-bottom: 1rem;
+    }
+    .alert-danger { background: #fdecea; color: #b71c1c; border: 1px solid #f5c6cb; }
+    .alert-warning { background: #fff3e0; color: #bf360c; border: 1px solid #ffcc80; }
+    .alert-success { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+
+    /* CARTE */
+    .map-wrap {
+      border-radius: 10px; overflow: hidden;
+      border: 1px solid #dde2e8; margin-bottom: 1rem;
+    }
+    .map-svg-wrap { width: 100%; }
+    .assoc-list { display: flex; flex-direction: column; gap: 10px; }
+    .assoc-card {
+      background: white; border: 1.5px solid #e5e9ef;
+      border-radius: 12px; padding: 1rem; cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .assoc-card:hover { border-color: #1F5C99; box-shadow: 0 2px 8px rgba(31,92,153,0.1); }
+    .assoc-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .assoc-badge {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: white; font-size: 12px; font-weight: 700;
+      margin-right: 7px; flex-shrink: 0;
+    }
+    .assoc-name { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+    .assoc-dist { font-size: 12px; font-weight: 600; color: #1F5C99; white-space: nowrap; }
+    .assoc-info { font-size: 13px; color: #555; margin-top: 4px; line-height: 1.5; }
+    .assoc-info span { display: block; }
+    .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .tag {
+      font-size: 11px; padding: 3px 9px; border-radius: 20px;
+      background: #e8f0f9; color: #1F5C99; font-weight: 500;
+    }
+    .tag-green { background: #e8f5e9; color: #2e7d32; }
+    .assoc-link { font-size: 13px; color: #1F5C99; text-decoration: none; display: inline-block; margin-top: 8px; font-weight: 500; }
+    .assoc-link:hover { text-decoration: underline; }
+    .footer-note {
+      font-size: 12px; color: #888; text-align: center;
+      margin-top: 1rem; line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-title">🥦 Nutri-Budget</div>
+    <div class="header-sub">Reste à Vivre · Bordeaux — Anonyme &amp; Gratuit</div>
+  </div>
+
+  <!-- ACCUEIL -->
+  <div id="s-accueil" class="screen active">
+    <div class="hero">
+      <div class="hero-emoji">🧾</div>
+      <div class="hero-title">Combien te reste-t-il<br>vraiment par repas ?</div>
+      <div class="hero-desc">En 1 minute, calcule ton budget repas réel<br>et trouve une aide alimentaire gratuite près de toi.</div>
+    </div>
+    <div class="badge-anon">✓ Anonyme · Aucune inscription requise</div>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-num">62,6%</div>
+        <div class="stat-lbl">des étudiants bordelais réduisent leur alimentation</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">578€</div>
+        <div class="stat-lbl">loyer moyen d'un studio à Bordeaux</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">84,3%</div>
+        <div class="stat-lbl">estiment que manger sainement est un privilège</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">5 aides</div>
+        <div class="stat-lbl">gratuites référencées à Bordeaux</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="goTo('s-revenus')">Commencer le diagnostic →</button>
+  </div>
+
+  <!-- REVENUS -->
+  <div id="s-revenus" class="screen">
+    <div class="steps">
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+    <div class="section-title">Tes revenus mensuels</div>
+    <div class="section-sub">Saisis ce que tu touches chaque mois. Laisse vide si ça ne s'applique pas.</div>
+    <div class="card">
+      <div class="card-label">Aides &amp; revenus</div>
+      <div class="field">
+        <label>Bourse CROUS (€)</label>
+        <input type="number" id="bourse" placeholder="ex : 300" min="0" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>APL / aide au logement (€)</label>
+        <input type="number" id="apl" placeholder="ex : 200" min="0" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>Job étudiant — salaire net (€)</label>
+        <input type="number" id="job" placeholder="ex : 400" min="0" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>Aide famille / virement parents (€)</label>
+        <input type="number" id="famille" placeholder="ex : 100" min="0" inputmode="decimal">
+      </div>
+    </div>
+    <button class="btn-primary" onclick="goCharges()">Suivant — Mes charges →</button>
+    <button class="btn-secondary" onclick="goTo('s-accueil')">← Retour</button>
+  </div>
+
+  <!-- CHARGES -->
+  <div id="s-charges" class="screen">
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+    <div class="section-title">Tes charges fixes</div>
+    <div class="section-sub">Ce que tu paies chaque mois, quoi qu'il arrive.</div>
+    <div class="card">
+      <div class="card-label">Logement &amp; vie bordelaise</div>
+      <div class="field">
+        <label>Loyer (charges comprises) (€)</label>
+        <input type="number" id="loyer" placeholder="ex : 578" min="0" value="578" inputmode="decimal">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Électricité / gaz (€)</label>
+          <input type="number" id="elec" placeholder="40" min="0" value="40" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label>Internet (€)</label>
+          <input type="number" id="internet" placeholder="15" min="0" value="15" inputmode="decimal">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Tram / transport (€)</label>
+          <input type="number" id="tram" placeholder="25" min="0" value="25" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label>Téléphone (€)</label>
+          <input type="number" id="tel" placeholder="15" min="0" value="15" inputmode="decimal">
+        </div>
+      </div>
+      <div class="field">
+        <label>Autres charges fixes (€)</label>
+        <input type="number" id="autres" placeholder="0" min="0" value="0" inputmode="decimal">
+      </div>
+    </div>
+    <button class="btn-primary" onclick="calculer()">Calculer mon budget repas →</button>
+    <button class="btn-secondary" onclick="goTo('s-revenus')">← Retour</button>
+  </div>
+
+  <!-- RÉSULTAT -->
+  <div id="s-resultat" class="screen">
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+    </div>
+    <div class="section-title">Ton diagnostic budgétaire</div>
+    <div class="card">
+      <div id="result-num" class="result-big">–</div>
+      <div class="result-unit">par repas</div>
+      <div class="gauge-wrap"><div id="gauge" class="gauge-bar" style="width:0%"></div></div>
+      <div class="bk-grid">
+        <div class="bk-box"><div class="bk-val" id="bk-rev">–</div><div class="bk-lbl">Revenus/mois</div></div>
+        <div class="bk-box"><div class="bk-val" id="bk-chg">–</div><div class="bk-lbl">Charges fixes</div></div>
+        <div class="bk-box"><div class="bk-val" id="bk-rst">–</div><div class="bk-lbl">Reste à vivre</div></div>
+      </div>
+      <div id="alert-msg"></div>
+    </div>
+    <div id="btn-aide" style="display:none">
+      <button class="btn-primary btn-danger" onclick="goTo('s-map')">
+        🗺️ Trouver de l'aide alimentaire gratuite →
+      </button>
+    </div>
+    <button class="btn-secondary" onclick="goTo('s-charges')">← Modifier mes données</button>
+  </div>
+
+  <!-- CARTE -->
+  <div id="s-map" class="screen">
+    <button class="btn-back" onclick="goTo('s-resultat')">← Retour au diagnostic</button>
+    <div class="section-title">Aide alimentaire gratuite 📍</div>
+    <div class="section-sub">5 points de distribution à Bordeaux — carte étudiante suffit</div>
+    <div class="map-wrap">
+      <svg class="map-svg-wrap" viewBox="0 0 420 230" xmlns="http://www.w3.org/2000/svg">
+        <rect width="420" height="230" fill="#dce8d4"/>
+        <rect x="0" y="95" width="420" height="14" fill="#b8d4f0" opacity="0.7"/>
+        <rect x="58" y="0" width="7" height="230" fill="#c5b496" opacity="0.6"/>
+        <rect x="118" y="0" width="7" height="230" fill="#c5b496" opacity="0.6"/>
+        <rect x="198" y="0" width="7" height="230" fill="#c5b496" opacity="0.6"/>
+        <rect x="278" y="0" width="7" height="230" fill="#c5b496" opacity="0.6"/>
+        <rect x="348" y="0" width="7" height="230" fill="#c5b496" opacity="0.6"/>
+        <rect x="0" y="50" width="420" height="7" fill="#c5b496" opacity="0.6"/>
+        <rect x="0" y="130" width="420" height="7" fill="#c5b496" opacity="0.6"/>
+        <rect x="0" y="178" width="420" height="7" fill="#c5b496" opacity="0.6"/>
+        <!-- Marqueurs associations -->
+        <circle cx="152" cy="102" r="11" fill="#d32f2f" stroke="white" stroke-width="2.5"/>
+        <text x="152" y="107" text-anchor="middle" font-size="11" fill="white" font-weight="bold">1</text>
+        <circle cx="226" cy="78" r="11" fill="#d32f2f" stroke="white" stroke-width="2.5"/>
+        <text x="226" y="83" text-anchor="middle" font-size="11" fill="white" font-weight="bold">2</text>
+        <circle cx="305" cy="115" r="11" fill="#d32f2f" stroke="white" stroke-width="2.5"/>
+        <text x="305" y="120" text-anchor="middle" font-size="11" fill="white" font-weight="bold">3</text>
+        <circle cx="88" cy="148" r="11" fill="#1D9E75" stroke="white" stroke-width="2.5"/>
+        <text x="88" y="153" text-anchor="middle" font-size="11" fill="white" font-weight="bold">4</text>
+        <circle cx="368" cy="88" r="11" fill="#1D9E75" stroke="white" stroke-width="2.5"/>
+        <text x="368" y="93" text-anchor="middle" font-size="11" fill="white" font-weight="bold">5</text>
+        <!-- Position utilisateur -->
+        <circle cx="210" cy="160" r="8" fill="#1F5C99" stroke="white" stroke-width="3"/>
+        <circle cx="210" cy="160" r="16" fill="#1F5C99" opacity="0.2"/>
+        <!-- Légende -->
+        <rect x="4" y="4" width="120" height="48" rx="5" fill="white" opacity="0.9"/>
+        <circle cx="14" cy="16" r="6" fill="#d32f2f"/>
+        <text x="24" y="20" font-size="10" fill="#333">Distribution sur inscription</text>
+        <circle cx="14" cy="32" r="6" fill="#1D9E75"/>
+        <text x="24" y="36" font-size="10" fill="#333">Distribution libre</text>
+        <circle cx="14" cy="46" r="6" fill="#1F5C99"/>
+        <text x="24" y="50" font-size="10" fill="#333">Ta position</text>
+      </svg>
+    </div>
+
+    <div class="assoc-list" id="assoc-list"></div>
+    <p class="footer-note">Toutes ces distributions sont 100% gratuites sur présentation de ta carte étudiante.<br>Pense à amener un sac ou des boîtes hermétiques.</p>
+  </div>
+
+</div>
+
+<script>
+  const ASSOCS = [
+    {
+      num:1, color:"#d32f2f",
+      name:"Linkee Bordeaux",
+      addr:"📍 125 Cours Alsace-Lorraine, Pey Berland",
+      tram:"🚋 Tram A / B / F — Hôtel de Ville",
+      horaire:"🕖 Mardi 19h–20h  ·  Mercredi 19h–20h (Talence, Rés. Jean Zay)",
+      panier:"🧺 Colis ~5 kg : légumes frais, féculents, conserves, hygiène",
+      dist:"0,4 km",
+      tags:["Hebdomadaire","Produits frais","Inscription en ligne"],
+      tagColors:["","green",""],
+      lien:"https://www.infojeunes-na.fr/agenda/distribution-alimentaire-gratuite-pour-etudiant-es"
+    },
+    {
+      num:2, color:"#d32f2f",
+      name:"Banque Alimentaire — IAE Bordeaux",
+      addr:"📍 IAE de Bordeaux, Jardin Botanique",
+      tram:"🚋 Tram A — Jardin Botanique",
+      horaire:"🕔 Mardi 17h–19h15",
+      panier:"🧺 Colis ~11 kg : épicerie sèche, fruits & légumes, produits bonus",
+      dist:"0,9 km",
+      tags:["Hebdomadaire","Grand colis 11 kg","RDV CROUS requis"],
+      tagColors:["","green",""],
+      lien:"https://rendezvous.u-bordeaux.fr/centre/distribution-alimentaire"
+    },
+    {
+      num:3, color:"#d32f2f",
+      name:"Banque Alimentaire — Piscine Universitaire",
+      addr:"📍 Piscine Universitaire, Campus Talence",
+      tram:"🚋 Tram B — Arts & Métiers",
+      horaire:"🕓 Lundi 16h30–19h15",
+      panier:"🧺 Colis ~11 kg : épicerie sèche, fruits & légumes",
+      dist:"2,1 km",
+      tags:["Hebdomadaire","Grand colis 11 kg","RDV CROUS requis"],
+      tagColors:["","green",""],
+      lien:"https://rendezvous.u-bordeaux.fr/centre/distribution-alimentaire"
+    },
+    {
+      num:4, color:"#1D9E75",
+      name:"La Cuvée des Écolos — UBM",
+      addr:"📍 Plaine de Bardanac, Maison des étudiants UBM",
+      tram:"🚋 Tram B — Arts & Métiers",
+      horaire:"🕛 Vendredi 12h–13h30",
+      panier:"🧺 Produits invendus supermarchés : fruits & légumes, DLC courte",
+      dist:"2,4 km",
+      tags:["Vendredi midi","Anti-gaspillage","Inscription requise"],
+      tagColors:["","green",""]
+    },
+    {
+      num:5, color:"#1D9E75",
+      name:"Un Espoir Solidaire — Campus Carreire",
+      addr:"📍 Pôle de vie Carreire, Université de Bordeaux",
+      tram:"🚋 Tram A — Hôpital Pellegrin",
+      horaire:"🕕 Mercredi 18h–19h30",
+      panier:"🧺 Colis alimentaires hebdomadaires",
+      dist:"3,2 km",
+      tags:["Hebdomadaire","RDV CROUS requis"],
+      tagColors:["",""],
+      lien:"https://rendezvous.u-bordeaux.fr/centre/distribution-alimentaire"
+    }
+  ];
+
+  function goTo(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+  function goCharges() {
+    const total = v('bourse') + v('apl') + v('job') + v('famille');
+    if (total === 0) { alert('Saisis au moins un revenu pour continuer.'); return; }
+    goTo('s-charges');
+  }
+
+  function calculer() {
+    const rev = v('bourse') + v('apl') + v('job') + v('famille');
+    const chg = v('loyer') + v('elec') + v('internet') + v('tram') + v('tel') + v('autres');
+    const reste = rev - chg;
+    const parRepas = reste / 30 / 3;
+
+    document.getElementById('bk-rev').textContent = rev.toFixed(0) + ' €';
+    document.getElementById('bk-chg').textContent = chg.toFixed(0) + ' €';
+    const rstEl = document.getElementById('bk-rst');
+    rstEl.textContent = reste.toFixed(0) + ' €';
+    rstEl.style.color = reste < 0 ? '#d32f2f' : reste < 150 ? '#e65100' : '#1D9E75';
+
+    const numEl = document.getElementById('result-num');
+    numEl.textContent = parRepas.toFixed(2) + ' €';
+
+    let cls, alertCls, alertTxt, gColor, gWidth;
+    if (parRepas < 0) {
+      cls = 'danger'; alertCls = 'alert-danger'; gColor = '#d32f2f'; gWidth = 4;
+      alertTxt = '⚠️ Tes charges dépassent tes revenus. Tu es en déficit budgétaire. Une aide alimentaire est indispensable pour toi dès maintenant.';
+    } else if (parRepas < 2) {
+      cls = 'danger'; alertCls = 'alert-danger'; gColor = '#d32f2f'; gWidth = Math.max(4, (parRepas / 10) * 100);
+      alertTxt = '⚠️ Moins de 2 € par repas — il est impossible de manger sainement avec ce budget. Tu as pleinement le droit à une aide alimentaire gratuite.';
+    } else if (parRepas < 3.5) {
+      cls = 'warning'; alertCls = 'alert-warning'; gColor = '#e65100'; gWidth = (parRepas / 10) * 100;
+      alertTxt = '⚠️ Ton budget est en dessous du seuil de 3,50 €/repas. Une alimentation équilibrée est très difficile dans cette situation. Des aides gratuites existent près de toi.';
+    } else {
+      cls = 'success'; alertCls = 'alert-success'; gColor = '#1D9E75'; gWidth = Math.min(100, (parRepas / 10) * 100);
+      alertTxt = '✓ Ton budget repas est au-dessus du seuil critique. Continue à surveiller tes dépenses alimentaires.';
+    }
+
+    numEl.className = 'result-big ' + cls;
+    document.getElementById('gauge').style.width = gWidth + '%';
+    document.getElementById('gauge').style.background = gColor;
+    document.getElementById('alert-msg').innerHTML = '<div class="alert ' + alertCls + '">' + alertTxt + '</div>';
+    document.getElementById('btn-aide').style.display = parRepas < 3.5 ? 'block' : 'none';
+
+    renderMap();
+    goTo('s-resultat');
+  }
+
+  function renderMap() {
+    const c = document.getElementById('assoc-list');
+    c.innerHTML = '';
+    ASSOCS.forEach(a => {
+      const d = document.createElement('div');
+      d.className = 'assoc-card';
+      const tags = a.tags.map((t, i) =>
+        `<span class="tag ${a.tagColors[i] === 'green' ? 'tag-green' : ''}">${t}</span>`
+      ).join('');
+      const lien = a.lien ? `<a href="${a.lien}" class="assoc-link" target="_blank">Voir les informations &amp; inscriptions →</a>` : '';
+      d.innerHTML = `
+        <div class="assoc-top">
+          <div style="display:flex;align-items:center;">
+            <span class="assoc-badge" style="background:${a.color}">${a.num}</span>
+            <span class="assoc-name">${a.name}</span>
+          </div>
+          <span class="assoc-dist">${a.dist}</span>
+        </div>
+        <div class="assoc-info">
+          <span>${a.addr}</span>
+          <span>${a.tram}</span>
+          <span>${a.horaire}</span>
+          <span style="margin-top:3px;">${a.panier}</span>
+        </div>
+        <div class="tags">${tags}</div>
+        ${lien}
+      `;
+      c.appendChild(d);
+    });
+  }
+</script>
+</body>
+</html>
